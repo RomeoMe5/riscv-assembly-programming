@@ -20,10 +20,12 @@
 
 ## Как работать с репозиторием
 
-Для клонирования репозитория достаточно выполнить следующую команду:
+Для клонирования репозитория необходимо установить пакет `git-lfs`,
+(например, `sudo apt-get install git-lfs` для Ubuntu и `brew install git-lfs` для macos).
+Далее достаточно выполнить следующую команду:
 
 ```bash
-git clone https://github.com/mt-omarov/riscv-assembly-programming.git`
+git clone https://github.com/mt-omarov/riscv-assembly-programming.git
 ```
 
 Репозиторий содержит дополнительные теоретические материалы и исходные коды
