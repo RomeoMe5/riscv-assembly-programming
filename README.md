@@ -21,7 +21,8 @@
 ## Как работать с репозиторием
 
 Для клонирования репозитория необходимо установить пакет `git-lfs`,
-(например, `sudo apt-get install git-lfs` для Ubuntu и `brew install git-lfs` для macos).
+(например, `sudo apt-get install git-lfs` для Ubuntu
+и `brew install git-lfs` для macos).
 Далее достаточно выполнить следующую команду:
 
 ```bash
