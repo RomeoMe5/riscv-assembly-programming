@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS := -Os -g -nostartfiles
+CFLAGS := -Os
 
 BUILD = build
 SRC   = src
