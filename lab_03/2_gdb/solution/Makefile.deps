@@ -1,0 +1,99 @@
+.DEFAULT_GOAL := all
+
+TOOLCHAIN_VERSION = 14.2.0-3
+OPENOCD_VERSION   = 0.12.0-6
+
+UNAME_S := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+UNAME_M := $(shell uname -m | tr '[:upper:]' '[:lower:]')
+
+ifeq ($(UNAME_M),x86_64)
+	UNAME_M := x64
+else ifeq ($(UNAME_M),aarch64)
+	UNAME_M := arm64
+else ifeq ($(UNAME_M),arm64)
+	UNAME_M := arm64
+endif
+
+SUPPORTED_PLATFORMS = linux-x64 linux-arm64 darwin-x64 darwin-arm64
+CURRENT_PLATFORM = $(UNAME_S)-$(UNAME_M)
+
+define CHECK_PLATFORM
+	@if [ -z "$(filter $(CURRENT_PLATFORM),$(SUPPORTED_PLATFORMS))" ]; then \
+		echo "Error: Unsupported platform: $(CURRENT_PLATFORM). Supported: $(SUPPORTED_PLATFORMS)"; \
+		exit 1; \
+	fi
+endef
+
+TOOLCHAIN_DIR = $(HOME)/.local/xPacks/riscv-none-elf-gcc/xpack-riscv-none-elf-gcc-$(TOOLCHAIN_VERSION)
+OPENOCD_DIR   = $(HOME)/.local/xPacks/openocd/xpack-openocd-$(OPENOCD_VERSION)
+
+TOOLCHAIN_URL = https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v$(TOOLCHAIN_VERSION)/xpack-riscv-none-elf-gcc-$(TOOLCHAIN_VERSION)-$(UNAME_S)-$(UNAME_M).tar.gz
+OPENOCD_URL   = https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v$(OPENOCD_VERSION)/xpack-openocd-$(OPENOCD_VERSION)-$(UNAME_S)-$(UNAME_M).tar.gz
+
+define CHECK_TOOL
+	@if [ ! -d "$(2)" ]; then \
+		echo "Error: $(1) not found at $(2)"; \
+		echo "Run 'make install-$(1)' to install"; \
+		exit 1; \
+	fi
+endef
+
+define INSTALL_TOOL
+	$(call CHECK_PLATFORM)
+	@echo "Installing $(1)..."; \
+	mkdir -p $(2); \
+	(wget $(3) -O /tmp/$(1).tar.gz || curl -L $(3) -o /tmp/$(1).tar.gz) && \
+	tar xvf /tmp/$(1).tar.gz -C $(2) --strip-components=1 && \
+	rm /tmp/$(1).tar.gz && \
+	chmod -R -w $(2)
+endef
+
+check-tools:
+	$(call CHECK_TOOL,toolchain,$(TOOLCHAIN_DIR))
+	$(call CHECK_TOOL,openocd,$(OPENOCD_DIR))
+
+install-toolchain: $(TOOLCHAIN_DIR)
+
+$(TOOLCHAIN_DIR):
+	$(call INSTALL_TOOL,toolchain,$@,$(TOOLCHAIN_URL))
+
+install-openocd: $(OPENOCD_DIR)
+
+$(OPENOCD_DIR):
+	$(call INSTALL_TOOL,openocd,$@,$(OPENOCD_URL))
+
+delete-toolchain:
+	sudo rm -rf $(TOOLCHAIN_DIR)
+
+delete-openocd:
+	sudo rm -rf $(OPENOCD_DIR)
+
+.PHONY: check-tools install-toolchain install-openocd delete-toolchain delete-openocd
+
+HAL_GIT       = https://github.com/MikronMIK32/mik32-hal.git
+SHARED_GIT    = https://github.com/MikronMIK32/mik32v2-shared.git
+UPLOADER_GIT  = https://github.com/MikronMIK32/mik32-uploader.git
+HAL_DIR       = mik32-hal
+SHARED_DIR    = mik32v2-shared
+UPLOADER_DIR  = mik32-uploader
+
+install-deps: $(HAL_DIR) $(SHARED_DIR) $(UPLOADER_DIR)
+
+delete-deps:
+	rm -rf $(HAL_DIR) $(SHARED_DIR) $(UPLOADER_DIR)
+
+$(HAL_DIR):
+	git clone $(HAL_GIT)
+	cd $@ && git checkout tags/v0.1.3 &>/dev/null
+
+$(SHARED_DIR):
+	git clone $(SHARED_GIT)
+	cd $@ && git checkout tags/v0.1.3 &>/dev/null
+
+$(UPLOADER_DIR):
+	git clone $(UPLOADER_GIT)
+
+.PHONY: install-deps delete-deps
+
+CROSS_PREFIX = $(TOOLCHAIN_DIR)/bin/riscv-none-elf-
+OPENOCD = $(OPENOCD_DIR)/bin/openocd
