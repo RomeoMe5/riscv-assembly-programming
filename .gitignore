@@ -1,3 +1,6 @@
 .DS_Store
 obj/
 build/
+mik32-hal/
+mik32v2-shared/
+mik32-uploader/
